@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: n8ntest
+    env: python
+    buildCommand: |
+      apt-get update
+      apt-get install -y wget unzip
+      apt-get install -y chromium-browser
+      pip install -r requirements.txt
+    startCommand: uvicorn blog_selenium_server:app --host 0.0.0.0 --port $PORT
+    plan: free
