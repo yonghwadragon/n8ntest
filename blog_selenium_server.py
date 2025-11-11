@@ -1,5 +1,5 @@
 # blog_selenium_server.py
-# FastAPI 로 JSON(title, body)을 받아 네이버 블로그에 자동 게시 (Render 호환 버전)
+# FastAPI 로 JSON(title, body)을 받아 네이버 블로그에 자동 게시 (Render 호환 완성 버전)
 
 import os
 import time
@@ -13,7 +13,6 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.chrome.service import Service
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
     TimeoutException,
@@ -41,12 +40,12 @@ app = FastAPI()
 # ─────────────────────────────
 def init_driver() -> webdriver.Chrome:
     """Render 환경에서도 작동 가능한 ChromeDriver 초기화"""
-    chromedriver_autoinstaller.install()  # ✅ ChromeDriver 자동 설치
+    chromedriver_autoinstaller.install()
 
     opts = Options()
-    opts.add_argument("--headless=new")  # ✅ GUI 없이 실행
-    opts.add_argument("--no-sandbox")  # ✅ Render용 필수
-    opts.add_argument("--disable-dev-shm-usage")  # ✅ 메모리 공유 방지
+    opts.add_argument("--headless=new")  # GUI 없이 실행
+    opts.add_argument("--no-sandbox")  # Render 필수 옵션
+    opts.add_argument("--disable-dev-shm-usage")
     opts.add_argument("--disable-gpu")
     opts.add_argument("--window-size=1920x1080")
     opts.add_argument("--disable-infobars")
@@ -55,9 +54,11 @@ def init_driver() -> webdriver.Chrome:
     opts.add_experimental_option("excludeSwitches", ["enable-logging", "enable-automation"])
     opts.add_experimental_option("useAutomationExtension", False)
 
-    # ✅ Render용 Chrome 경로 설정 (환경에 따라 생략 가능)
-    if os.path.exists("/usr/bin/google-chrome"):
-        opts.binary_location = "/usr/bin/google-chrome"
+    # ✅ Render용 Chrome 실행 경로 자동 감지
+    for path in ["/usr/bin/chromium-browser", "/usr/bin/chromium", "/usr/bin/google-chrome"]:
+        if os.path.exists(path):
+            opts.binary_location = path
+            break
 
     driver = webdriver.Chrome(options=opts)
     driver.set_window_size(1600, 950)
@@ -92,7 +93,7 @@ def naver_login(driver: webdriver.Chrome) -> WebDriverWait:
     return WebDriverWait(driver, MODEL_WAIT)
 
 
-# 로그인 수행
+# 서버 시작 시 로그인 시도
 try:
     wait = naver_login(driver)
 except Exception as e:
